@@ -12,6 +12,12 @@ const (
 	PodDeleting    PodPhase = "Deleting"  // The pod is marked for deletion.
 	PodTerminating PodPhase = "Terminating"
 )
+const (
+	NodeReady    NodeStatus = "Ready"
+	NodeNotReady NodeStatus = "NotReady"
+)
+
+type NodeStatus string
 
 type Pod struct {
 	Name              string     `json:"name"`
@@ -24,7 +30,7 @@ type Pod struct {
 type PodPhase string
 
 type Node struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Status  string `json:"status"`
+	Name    string     `json:"name"`
+	Address string     `json:"address"`
+	Status  NodeStatus `json:"status"`
 }

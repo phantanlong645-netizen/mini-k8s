@@ -92,7 +92,7 @@ func (ms *InMemoryStore) DeletePod(namespace, name string) error {
 	return nil
 }
 
-func (ms *InMemoryStore) ListPod(namespace string) ([]*api.Pod, error) {
+func (ms *InMemoryStore) ListPods(namespace string) ([]*api.Pod, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 	var result []*api.Pod
@@ -143,7 +143,7 @@ func (s *InMemoryStore) DeleteNode(name string) error {
 	delete(s.nodes, name)
 	return nil
 }
-func (ms *InMemoryStore) ListNode() ([]*api.Node, error) {
+func (ms *InMemoryStore) ListNodes() ([]*api.Node, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 	var result []*api.Node
