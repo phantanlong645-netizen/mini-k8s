@@ -1,13 +1,15 @@
-package apiserver
+package main
 
 import (
 	"flag"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log"
 	"mini-k8s/pkg/api"
 	"mini-k8s/pkg/store"
+	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 const DefaultNamespace = "default"
@@ -17,10 +19,26 @@ type APIServer struct {
 }
 
 func NewAPIServer(s store.Store) *APIServer {
-	return &APIServer{s}
+	return &APIServer{store: s}
 }
 func (s *APIServer) Serve(port string) {
 	router := gin.Default() // Use Gin router
+
+	// Dev-friendly CORS (lets you open the UI from file:// or another port).
+	router.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+		c.Next()
+	})
+
+	// UI: http://localhost:<port>/ui/
+	router.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/ui/") })
+	router.Static("/ui", "./web")
 
 	// Pod routes
 	// /api/v1/namespaces/{namespace}/pods
@@ -59,6 +77,7 @@ func (s *APIServer) createPodHandlerGin(c *gin.Context) {
 	}
 	if pod.Name == "" {
 		c.JSON(400, gin.H{"error": "Pod name must be provided"})
+		return
 	}
 	pod.Namespace = namespace
 	if pod.Namespace == "" {
@@ -151,15 +170,22 @@ func (s *APIServer) createNodeHandlerGin(c *gin.Context) {
 	var node api.Node
 	if err := c.ShouldBindJSON(&node); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
 	}
 	if node.Name == "" {
 		c.JSON(400, gin.H{"error": "Node name must be provided"})
+		return
 	}
 	if node.Status == "" {
 		node.Status = api.NodeNotReady
 	}
 	if err := s.store.CreateNode(&node); err != nil {
-		c.JSON(500, gin.H{"error": "Failed to create node: " + err.Error()})
+		if strings.Contains(err.Error(), "already exists") {
+			c.JSON(409, gin.H{"error": "Failed to create node: " + err.Error()})
+		} else {
+			c.JSON(500, gin.H{"error": "Failed to create node: " + err.Error()})
+		}
+		return
 	}
 	c.JSON(201, node)
 }

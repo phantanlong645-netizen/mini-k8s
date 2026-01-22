@@ -51,7 +51,7 @@ func (ms *InMemoryStore) UpdatePod(pod *api.Pod) error {
 	}
 	//如果这个pod是正在被删除的过程中，那pod是新传入的状态，假如新传入的状态又显示没删除或者删除的时间戳不一致，那就是错误的更新，应该返回错误
 	if existingpod.DeletionTimestamp != nil {
-		if pod.DeletionTimestamp == nil || pod.DeletionTimestamp.Equal(*existingpod.DeletionTimestamp) {
+		if pod.DeletionTimestamp == nil || !pod.DeletionTimestamp.Equal(*existingpod.DeletionTimestamp) {
 			return fmt.Errorf("cannot update pod %s in namespace %s: incoming update does not have matching DeletionTimestamp for an already terminating pod", pod.Name, pod.Namespace)
 		}
 		//如果pod是已经在终止的过程了，那可以更改为像failed的状态
@@ -110,6 +110,7 @@ func (ms *InMemoryStore) CreateNode(node *api.Node) error {
 	_, ok := ms.nodes[node.Name]
 	if !ok {
 		ms.nodes[node.Name] = node
+		return nil
 	}
 
 	return fmt.Errorf("node %s already exists", node.Name)
@@ -126,11 +127,11 @@ func (ms *InMemoryStore) GetNode(name string) (*api.Node, error) {
 func (ms *InMemoryStore) UpdateNode(node *api.Node) error {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
-	existingNode, ok := ms.nodes[node.Name]
+	_, ok := ms.nodes[node.Name]
 	if !ok {
 		return fmt.Errorf("node %s not found", node.Name)
 	}
-	ms.nodes[node.Name] = existingNode
+	ms.nodes[node.Name] = node
 	return nil
 }
 func (s *InMemoryStore) DeleteNode(name string) error {
