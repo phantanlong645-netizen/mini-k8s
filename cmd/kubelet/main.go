@@ -1,4 +1,4 @@
-package kubelet
+package main
 
 import (
 	"flag"
@@ -33,7 +33,7 @@ func (kubelet *Kubelet) registerNode() error {
 	node := &api.Node{
 		Name:    kubelet.NodeName,
 		Address: kubelet.NodeAddress,
-		Status:  DefaultNamespace,
+		Status:  api.NodeReady,
 	}
 	createNode, err := kubelet.APIclient.CreateNode(node)
 	//kubelet是无状态的，如果重启了 注册节点并不意味着 系统出问题了 可能是已经注册过了
@@ -146,7 +146,7 @@ func (kubelet *Kubelet) syncPods() {
 func main() {
 	nodeName := flag.String("name", "", "Name of this node (kubelet)")
 	nodeAddress := flag.String("address", "localhost:10250", "Address of this node (e.g. IP or hostname, port is informational for mock)")
-	apiServerURL := flag.String("apiserver", "http://localhost:8080", "URL of the API server")
+	apiServerURL := flag.String("apiserver", "http://localhost:8055", "URL of the API server")
 	syncInterval := flag.Duration("sync-interval", 10*time.Second, "Pod synchronization interval")
 	flag.Parse()
 	if *nodeName == "" {

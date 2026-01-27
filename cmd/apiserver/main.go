@@ -237,7 +237,7 @@ func (s *APIServer) updateNodeHandlerGin(c *gin.Context) {
 
 }
 func main() {
-	port := flag.String("port", "8080", "Port to run the api server on")
+	port := flag.String("port", "8055", "Port to run the api server on")
 	flag.Parse()
 	gin.SetMode(gin.ReleaseMode)
 	dataStore := store.NewInMemoryStore()
